@@ -10,11 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout repository
+    # 1️⃣ Checkout the repo
     - name: Checkout code
-      uses: actions/checkout@v3 
+      uses: actions/checkout@v3
 
-    # 2️⃣ Configure AWS credentials
+    # 2️⃣ Set up JDK 17 for Spring Boot build
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: temurin
+        java-version: '17'
+
+    # 3️⃣ Build the Spring Boot jar
+    - name: Build Spring Boot Jar
+      working-directory: jwtDashboardBackend
+      run: |
+        ./mvnw clean package -DskipTests
+
+    # 4️⃣ Configure AWS credentials
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -22,28 +35,28 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # 3️⃣ Login to Amazon ECR
+    # 5️⃣ Login to Amazon ECR
     - name: Login to Amazon ECR
       run: |
         aws ecr get-login-password --region $AWS_REGION \
         | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
-    # 4️⃣ Build backend Docker image
+    # 6️⃣ Build Docker image for backend
     - name: Build backend Docker image
       run: |
         docker build -t jwtloginbackend ./jwtDashboardBackend
 
-    # 5️⃣ Tag Docker image for ECR
+    # 7️⃣ Tag Docker image
     - name: Tag Docker image
       run: |
         docker tag jwtloginbackend:latest ${{ secrets.ECR_URI }}/jwtloginbackend:latest
 
-    # 6️⃣ Push image to Amazon ECR
+    # 8️⃣ Push Docker image to ECR
     - name: Push image to ECR
       run: |
         docker push ${{ secrets.ECR_URI }}/jwtloginbackend:latest
 
-    # 7️⃣ Force ECS service redeployment
+    # 9️⃣ Deploy to ECS
     - name: Deploy to ECS
       run: |
         aws ecs update-service \
