@@ -24,8 +24,7 @@ jobs:
     # 3️⃣ Build the Spring Boot jar
     - name: Build Spring Boot Jar
       working-directory: jwtDashboardBackend
-      run: |
-        ./mvnw clean package -DskipTests
+      run: /mvnw clean package -DskipTests
 
     # 4️⃣ Configure AWS credentials
     - name: Configure AWS credentials
